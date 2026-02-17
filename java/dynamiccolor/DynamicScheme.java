@@ -23,8 +23,11 @@ import hct.Hct;
 import palettes.TonalPalette;
 import utils.MathUtils;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Provides important settings for creating colors dynamically, and 6 color palettes. Requires: 1. A
@@ -47,6 +50,9 @@ public class DynamicScheme {
 
   /** The source color of the scheme in HCT format. */
   public final Hct sourceColorHct;
+
+  /** The extra source colors of the theme as HCT colors. */
+  public final List<Hct> extraSourceColorsHct;
 
   /** The variant of the scheme. */
   public final Variant variant;
@@ -135,6 +141,36 @@ public class DynamicScheme {
       TonalPalette neutralPalette,
       TonalPalette neutralVariantPalette,
       Optional<TonalPalette> errorPalette) {
+    this(
+        sourceColorHct,
+        variant,
+        isDark,
+        contrastLevel,
+        platform,
+        specVersion,
+        primaryPalette,
+        secondaryPalette,
+        tertiaryPalette,
+        neutralPalette,
+        neutralVariantPalette,
+        errorPalette,
+        new ArrayList<>());
+  }
+
+  public DynamicScheme(
+      Hct sourceColorHct,
+      Variant variant,
+      boolean isDark,
+      double contrastLevel,
+      Platform platform,
+      SpecVersion specVersion,
+      TonalPalette primaryPalette,
+      TonalPalette secondaryPalette,
+      TonalPalette tertiaryPalette,
+      TonalPalette neutralPalette,
+      TonalPalette neutralVariantPalette,
+      Optional<TonalPalette> errorPalette,
+      List<Hct> extraSourceColorsHct) {
     this.sourceColorArgb = sourceColorHct.toInt();
     this.sourceColorHct = sourceColorHct;
     this.variant = variant;
@@ -142,6 +178,7 @@ public class DynamicScheme {
     this.contrastLevel = contrastLevel;
     this.platform = platform;
     this.specVersion = maybeFallbackSpecVersion(specVersion, variant);
+    this.extraSourceColorsHct = extraSourceColorsHct;
 
     this.primaryPalette = primaryPalette;
     this.secondaryPalette = secondaryPalette;
@@ -168,7 +205,8 @@ public class DynamicScheme {
         other.tertiaryPalette,
         other.neutralPalette,
         other.neutralVariantPalette,
-        Optional.of(other.errorPalette));
+        Optional.of(other.errorPalette),
+        other.extraSourceColorsHct);
   }
 
   /**
@@ -176,10 +214,16 @@ public class DynamicScheme {
    * given spec version, the fallback spec version is returned.
    */
   private static SpecVersion maybeFallbackSpecVersion(SpecVersion specVersion, Variant variant) {
-    return switch (variant) {
-      case EXPRESSIVE, VIBRANT, TONAL_SPOT, NEUTRAL -> specVersion;
-      default -> SpecVersion.SPEC_2021;
-    };
+    if (variant == Variant.CMF) {
+      return specVersion;
+    }
+    if (variant == Variant.EXPRESSIVE
+        || variant == Variant.VIBRANT
+        || variant == Variant.TONAL_SPOT
+        || variant == Variant.NEUTRAL) {
+      return specVersion == SpecVersion.SPEC_2026 ? SpecVersion.SPEC_2025 : specVersion;
+    }
+    return SpecVersion.SPEC_2021;
   }
 
   /**
@@ -267,12 +311,17 @@ public class DynamicScheme {
   @Override
   public String toString() {
     return String.format(
-        "Scheme: variant=%s, mode=%s, platform=%s, contrastLevel=%s, seed=%s, specVersion=%s",
+        "Scheme: variant=%s, mode=%s, platform=%s, contrastLevel=%s, seed=%s, %sspecVersion=%s",
         variant.name(),
         isDark ? "dark" : "light",
         platform.name().toLowerCase(Locale.ENGLISH),
         new DecimalFormat("0.0").format(contrastLevel),
         sourceColorHct,
+        extraSourceColorsHct.isEmpty()
+            ? ""
+            : "extraSourceColorsHct="
+                + extraSourceColorsHct.stream().map(Hct::toString).collect(Collectors.joining(", "))
+                + ", ",
         specVersion);
   }
 

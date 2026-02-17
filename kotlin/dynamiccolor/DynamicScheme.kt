@@ -50,6 +50,7 @@ open class DynamicScheme(
   val neutralPalette: TonalPalette,
   val neutralVariantPalette: TonalPalette,
   val errorPalette: TonalPalette,
+  val extraSourceColorsHct: List<Hct> = emptyList(),
 ) {
 
   /** The spec version of the scheme. */
@@ -79,7 +80,7 @@ open class DynamicScheme(
   override fun toString(): String {
     return "Scheme: variant=${variant.name}, mode=${if (isDark) "dark" else "light"}, platform=${platform.name.lowercase(
       Locale.ENGLISH
-    )}, contrastLevel=${DecimalFormat("0.0").format(contrastLevel)}, seed=$sourceColorHct, specVersion=$specVersion"
+    )}, contrastLevel=${DecimalFormat("0.0").format(contrastLevel)}, seed=$sourceColorHct, ${if (extraSourceColorsHct.isEmpty()) "" else "extraSourceColorsHct=${extraSourceColorsHct.joinToString(",") { it.toString() }}, "}specVersion=$specVersion"
   }
 
   private val dynamicColors = MaterialDynamicColors()
@@ -270,6 +271,7 @@ open class DynamicScheme(
         other.neutralPalette,
         other.neutralVariantPalette,
         other.errorPalette,
+        other.extraSourceColorsHct,
       )
     }
 
@@ -357,17 +359,18 @@ open class DynamicScheme(
      * given spec version, the fallback spec version is returned.
      */
     private fun maybeFallbackSpecVersion(specVersion: SpecVersion, variant: Variant): SpecVersion {
-      return when (variant) {
-        Variant.EXPRESSIVE,
-        Variant.VIBRANT,
-        Variant.TONAL_SPOT,
-        Variant.NEUTRAL -> specVersion
-        Variant.MONOCHROME,
-        Variant.FIDELITY,
-        Variant.CONTENT,
-        Variant.RAINBOW,
-        Variant.FRUIT_SALAD -> SpecVersion.SPEC_2021
+      if (variant == Variant.CMF) {
+        return specVersion
       }
+      if (
+        variant == Variant.EXPRESSIVE ||
+          variant == Variant.VIBRANT ||
+          variant == Variant.TONAL_SPOT ||
+          variant == Variant.NEUTRAL
+      ) {
+        return if (specVersion == SpecVersion.SPEC_2026) SpecVersion.SPEC_2025 else specVersion
+      }
+      return SpecVersion.SPEC_2021
     }
   }
 }

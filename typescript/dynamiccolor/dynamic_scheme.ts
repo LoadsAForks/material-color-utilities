@@ -59,6 +59,8 @@ export type Platform = 'phone'|'watch';
  *     of the color are specified in the design specification of the variant.
  *     Usually not colorful, but slightly more colorful than Neutral. Intended
  *     for backgrounds & surfaces.
+ * @param extraSourceColorsHct Additional source colors to be used for
+ *     generating palettes and color roles.
  */
 interface DynamicSchemeOptions {
   sourceColorHct: Hct;
@@ -73,6 +75,7 @@ interface DynamicSchemeOptions {
   neutralPalette?: TonalPalette;
   neutralVariantPalette?: TonalPalette;
   errorPalette?: TonalPalette;
+  extraSourceColorsHct?: Hct[];
 }
 
 /**
@@ -121,6 +124,11 @@ export class DynamicScheme {
    * The source color of the theme as an HCT color.
    */
   sourceColorHct: Hct;
+
+  /**
+   * The extra source colors of the theme as HCT colors.
+   */
+  extraSourceColorsHct: Hct[];
 
   /** The source color of the theme as an ARGB 32-bit integer. */
   readonly sourceColorArgb: number;
@@ -188,26 +196,26 @@ export class DynamicScheme {
 
   private static maybeFallbackSpecVersion(
       specVersion: SpecVersion, variant: Variant): SpecVersion {
-    switch (variant) {
-      case Variant.EXPRESSIVE:
-      case Variant.VIBRANT:
-      case Variant.TONAL_SPOT:
-      case Variant.NEUTRAL:
-        return specVersion;
-      default:
-        return '2021';
+    if (variant === Variant.CMF) {
+      return specVersion;
     }
+    if (variant === Variant.EXPRESSIVE || variant === Variant.VIBRANT ||
+        variant === Variant.TONAL_SPOT || variant === Variant.NEUTRAL) {
+      return specVersion === '2026' ? '2025' : specVersion;
+    }
+    return '2021';
   }
 
   constructor(args: DynamicSchemeOptions) {
+    this.sourceColorHct = args.sourceColorHct;
     this.sourceColorArgb = args.sourceColorHct.toInt();
+    this.extraSourceColorsHct = args.extraSourceColorsHct ?? [];
     this.variant = args.variant;
     this.contrastLevel = args.contrastLevel;
     this.isDark = args.isDark;
     this.platform = args.platform ?? 'phone';
     this.specVersion = DynamicScheme.maybeFallbackSpecVersion(
         args.specVersion ?? '2021', this.variant);
-    this.sourceColorHct = args.sourceColorHct;
     this.primaryPalette = args.primaryPalette ??
         getSpec(this.specVersion)
             .getPrimaryPalette(
@@ -250,7 +258,12 @@ export class DynamicScheme {
         `platform=${this.platform}, ` +
         `contrastLevel=${this.contrastLevel.toFixed(1)}, ` +
         `seed=${this.sourceColorHct.toString()}, ` +
-        `specVersion=${this.specVersion}`
+        (this.extraSourceColorsHct.length > 0 ?
+             `extraSourceColorsHct=${
+                 this.extraSourceColorsHct.map(c => c.toString())
+                     .join(', ')}, ` :
+             '') +
+        `specVersion=${this.specVersion}`;
   }
 
   /**
