@@ -23,39 +23,61 @@ import palettes.TonalPalette
 
 /** A Dynamic Color theme with 2 source colors. */
 class SchemeCmf(
-  sourceColorHct: Hct,
+  sourceColorHctList: List<Hct>,
   isDark: Boolean,
   contrastLevel: Double,
   specVersion: ColorSpec.SpecVersion = ColorSpec.SpecVersion.SPEC_2026,
   platform: Platform = DEFAULT_PLATFORM,
-  extraSourceColorsHct: List<Hct> = emptyList(),
 ) :
   DynamicScheme(
-    sourceColorHct = sourceColorHct,
+    sourceColorHctList = sourceColorHctList,
     variant = Variant.CMF,
     isDark = isDark,
     contrastLevel = contrastLevel,
     platform = platform,
     specVersion = specVersion,
-    primaryPalette = TonalPalette.fromHueAndChroma(sourceColorHct.hue, sourceColorHct.chroma),
+    primaryPalette =
+      TonalPalette.fromHueAndChroma(
+        sourceColorHctList.first().hue,
+        sourceColorHctList.first().chroma,
+      ),
     secondaryPalette =
-      TonalPalette.fromHueAndChroma(sourceColorHct.hue, sourceColorHct.chroma * 0.5),
-    tertiaryPalette = tertiaryPalette(sourceColorHct, extraSourceColorsHct),
-    neutralPalette = TonalPalette.fromHueAndChroma(sourceColorHct.hue, sourceColorHct.chroma * 0.2),
+      TonalPalette.fromHueAndChroma(
+        sourceColorHctList.first().hue,
+        sourceColorHctList.first().chroma * 0.5,
+      ),
+    tertiaryPalette = tertiaryPalette(sourceColorHctList),
+    neutralPalette =
+      TonalPalette.fromHueAndChroma(
+        sourceColorHctList.first().hue,
+        sourceColorHctList.first().chroma * 0.2,
+      ),
     neutralVariantPalette =
-      TonalPalette.fromHueAndChroma(sourceColorHct.hue, sourceColorHct.chroma * 0.2),
-    errorPalette = TonalPalette.fromHueAndChroma(23.0, sourceColorHct.chroma.coerceAtLeast(50.0)),
-    extraSourceColorsHct = extraSourceColorsHct,
+      TonalPalette.fromHueAndChroma(
+        sourceColorHctList.first().hue,
+        sourceColorHctList.first().chroma * 0.2,
+      ),
+    errorPalette =
+      TonalPalette.fromHueAndChroma(23.0, sourceColorHctList.first().chroma.coerceAtLeast(50.0)),
   ) {
   init {
     require(specVersion == ColorSpec.SpecVersion.SPEC_2026) {
       "SchemeCmf can only be used with spec version 2026."
     }
   }
+
+  constructor(
+    sourceColorHct: Hct,
+    isDark: Boolean,
+    contrastLevel: Double,
+    specVersion: ColorSpec.SpecVersion = ColorSpec.SpecVersion.SPEC_2026,
+    platform: Platform = DEFAULT_PLATFORM,
+  ) : this(listOf(sourceColorHct), isDark, contrastLevel, specVersion, platform)
 }
 
-private fun tertiaryPalette(sourceColorHct: Hct, extraSourceColorsHct: List<Hct>): TonalPalette {
-  val secondarySourceColorHct = extraSourceColorsHct.firstOrNull() ?: sourceColorHct
+private fun tertiaryPalette(sourceColorHctList: List<Hct>): TonalPalette {
+  val sourceColorHct = sourceColorHctList.first()
+  val secondarySourceColorHct = sourceColorHctList.getOrNull(1) ?: sourceColorHct
   return if (sourceColorHct.toInt() == secondarySourceColorHct.toInt()) {
     TonalPalette.fromHueAndChroma(sourceColorHct.hue, sourceColorHct.chroma * 0.75)
   } else {

@@ -742,8 +742,8 @@ final class ColorSpec2026 extends ColorSpec2025 {
             .setPalette(s -> s.tertiaryPalette)
             .setTone(
                 s ->
-                    !s.extraSourceColorsHct.isEmpty()
-                        ? s.extraSourceColorsHct.get(0).getTone()
+                    s.sourceColorHctList.size() > 1
+                        ? s.sourceColorHctList.get(1).getTone()
                         : s.sourceColorHct.getTone())
             .setIsBackground(true)
             .setBackground(s -> highestSurface(s))
@@ -777,8 +777,8 @@ final class ColorSpec2026 extends ColorSpec2025 {
             .setTone(
                 s -> {
                   Hct secondarySourceColorHct =
-                      !s.extraSourceColorsHct.isEmpty()
-                          ? s.extraSourceColorsHct.get(0)
+                      s.sourceColorHctList.size() > 1
+                          ? s.sourceColorHctList.get(1)
                           : s.sourceColorHct;
                   return secondarySourceColorHct.getTone() > 55
                       ? MathUtils.clampDouble(61, 90, secondarySourceColorHct.getTone())

@@ -609,7 +609,7 @@ export class ColorSpecDelegateImpl2026 extends ColorSpecDelegateImpl2025 {
       name: 'tertiary',
       palette: (s) => s.tertiaryPalette,
       tone: (s) => {
-        return s.extraSourceColorsHct[0]?.tone ?? s.sourceColorHct.tone;
+        return s.sourceColorHcts[1]?.tone ?? s.sourceColorHct.tone;
       },
       isBackground: true,
       background: (s) => this.highestSurface(s),
@@ -638,7 +638,7 @@ export class ColorSpecDelegateImpl2026 extends ColorSpecDelegateImpl2025 {
       palette: (s) => s.tertiaryPalette,
       tone: (s) => {
         const secondarySourceColorHct =
-            s.extraSourceColorsHct[0] ?? s.sourceColorHct;
+            s.sourceColorHcts[1] ?? s.sourceColorHct;
         return secondarySourceColorHct.tone > 55 ?
             clampDouble(61, 90, secondarySourceColorHct.tone) :
             clampDouble(20, 49, secondarySourceColorHct.tone);

@@ -30,7 +30,7 @@ import kotlin.math.min
  */
 open class DynamicScheme(
   /** The source color of the scheme in HCT format. */
-  val sourceColorHct: Hct,
+  val sourceColorHctList: List<Hct>,
   /** The variant of the scheme. */
   val variant: Variant,
   /** Whether or not the scheme is dark mode. */
@@ -50,15 +50,46 @@ open class DynamicScheme(
   val neutralPalette: TonalPalette,
   val neutralVariantPalette: TonalPalette,
   val errorPalette: TonalPalette,
-  val extraSourceColorsHct: List<Hct> = emptyList(),
 ) {
 
   /** The spec version of the scheme. */
+  constructor(
+    sourceColorHct: Hct,
+    variant: Variant,
+    isDark: Boolean,
+    contrastLevel: Double,
+    platform: Platform = DEFAULT_PLATFORM,
+    specVersion: SpecVersion = DEFAULT_SPEC_VERSION,
+    primaryPalette: TonalPalette,
+    secondaryPalette: TonalPalette,
+    tertiaryPalette: TonalPalette,
+    neutralPalette: TonalPalette,
+    neutralVariantPalette: TonalPalette,
+    errorPalette: TonalPalette,
+  ) : this(
+    listOf(sourceColorHct),
+    variant,
+    isDark,
+    contrastLevel,
+    platform,
+    specVersion,
+    primaryPalette,
+    secondaryPalette,
+    tertiaryPalette,
+    neutralPalette,
+    neutralVariantPalette,
+    errorPalette,
+  )
+
   val specVersion: SpecVersion
 
   init {
+    require(sourceColorHctList.isNotEmpty()) { "sourceColorHctList cannot be empty" }
     this.specVersion = maybeFallbackSpecVersion(specVersion, variant)
   }
+
+  /** The source color of the scheme in HCT format. */
+  val sourceColorHct: Hct = sourceColorHctList.first()
 
   /** The source color of the scheme in ARGB format. */
   val sourceColorArgb: Int = sourceColorHct.toInt()
@@ -78,9 +109,17 @@ open class DynamicScheme(
   }
 
   override fun toString(): String {
-    return "Scheme: variant=${variant.name}, mode=${if (isDark) "dark" else "light"}, platform=${platform.name.lowercase(
-      Locale.ENGLISH
-    )}, contrastLevel=${DecimalFormat("0.0").format(contrastLevel)}, seed=$sourceColorHct, ${if (extraSourceColorsHct.isEmpty()) "" else "extraSourceColorsHct=${extraSourceColorsHct.joinToString(",") { it.toString() }}, "}specVersion=$specVersion"
+    val mode = if (isDark) "dark" else "light"
+    val platformName = platform.name.lowercase(Locale.ENGLISH)
+    val contrast = DecimalFormat("0.0").format(contrastLevel)
+    val extraColors =
+      if (sourceColorHctList.size <= 1) {
+        ""
+      } else {
+        "sourceColorHctList=[${sourceColorHctList.joinToString(", ") { it.toString() }}], "
+      }
+    return "Scheme: variant=${variant.name}, mode=$mode, platform=$platformName, " +
+      "contrastLevel=$contrast, seed=$sourceColorHct, ${extraColors}specVersion=$specVersion"
   }
 
   private val dynamicColors = MaterialDynamicColors()
@@ -259,7 +298,7 @@ open class DynamicScheme(
     @JvmStatic
     fun from(other: DynamicScheme, isDark: Boolean, contrastLevel: Double): DynamicScheme {
       return DynamicScheme(
-        other.sourceColorHct,
+        other.sourceColorHctList,
         other.variant,
         isDark,
         contrastLevel,
@@ -271,7 +310,6 @@ open class DynamicScheme(
         other.neutralPalette,
         other.neutralVariantPalette,
         other.errorPalette,
-        other.extraSourceColorsHct,
       )
     }
 

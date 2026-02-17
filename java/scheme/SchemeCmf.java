@@ -21,7 +21,7 @@ import dynamiccolor.DynamicScheme;
 import dynamiccolor.Variant;
 import hct.Hct;
 import palettes.TonalPalette;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,13 +29,7 @@ import java.util.Optional;
 public class SchemeCmf extends DynamicScheme {
 
   public SchemeCmf(Hct sourceColorHct, boolean isDark, double contrastLevel) {
-    this(
-        sourceColorHct,
-        isDark,
-        contrastLevel,
-        SpecVersion.SPEC_2026,
-        DEFAULT_PLATFORM,
-        new ArrayList<>());
+    this(sourceColorHct, isDark, contrastLevel, SpecVersion.SPEC_2026, DEFAULT_PLATFORM);
   }
 
   public SchemeCmf(
@@ -43,31 +37,48 @@ public class SchemeCmf extends DynamicScheme {
       boolean isDark,
       double contrastLevel,
       SpecVersion specVersion,
-      Platform platform,
-      List<Hct> extraSourceColorsHct) {
+      Platform platform) {
+    this(Collections.singletonList(sourceColorHct), isDark, contrastLevel, specVersion, platform);
+  }
+
+  public SchemeCmf(List<Hct> sourceColorHctList, boolean isDark, double contrastLevel) {
+    this(sourceColorHctList, isDark, contrastLevel, SpecVersion.SPEC_2026, DEFAULT_PLATFORM);
+  }
+
+  public SchemeCmf(
+      List<Hct> sourceColorHctList,
+      boolean isDark,
+      double contrastLevel,
+      SpecVersion specVersion,
+      Platform platform) {
     super(
-        sourceColorHct,
+        sourceColorHctList,
         Variant.CMF,
         isDark,
         contrastLevel,
         platform,
         specVersion,
-        TonalPalette.fromHueAndChroma(sourceColorHct.getHue(), sourceColorHct.getChroma()),
-        TonalPalette.fromHueAndChroma(sourceColorHct.getHue(), sourceColorHct.getChroma() * 0.5),
-        tertiaryPalette(sourceColorHct, extraSourceColorsHct),
-        TonalPalette.fromHueAndChroma(sourceColorHct.getHue(), sourceColorHct.getChroma() * 0.2),
-        TonalPalette.fromHueAndChroma(sourceColorHct.getHue(), sourceColorHct.getChroma() * 0.2),
+        TonalPalette.fromHueAndChroma(
+            sourceColorHctList.get(0).getHue(), sourceColorHctList.get(0).getChroma()),
+        TonalPalette.fromHueAndChroma(
+            sourceColorHctList.get(0).getHue(), sourceColorHctList.get(0).getChroma() * 0.5),
+        tertiaryPalette(sourceColorHctList),
+        TonalPalette.fromHueAndChroma(
+            sourceColorHctList.get(0).getHue(), sourceColorHctList.get(0).getChroma() * 0.2),
+        TonalPalette.fromHueAndChroma(
+            sourceColorHctList.get(0).getHue(), sourceColorHctList.get(0).getChroma() * 0.2),
         Optional.of(
-            TonalPalette.fromHueAndChroma(23.0, Math.max(sourceColorHct.getChroma(), 50.0))),
-        extraSourceColorsHct);
+            TonalPalette.fromHueAndChroma(
+                23.0, Math.max(sourceColorHctList.get(0).getChroma(), 50.0))));
     if (specVersion != SpecVersion.SPEC_2026) {
       throw new IllegalArgumentException("SchemeCmf can only be used with spec version 2026.");
     }
   }
 
-  private static TonalPalette tertiaryPalette(Hct sourceColorHct, List<Hct> extraSourceColorsHct) {
+  private static TonalPalette tertiaryPalette(List<Hct> sourceColorHctList) {
+    Hct sourceColorHct = sourceColorHctList.get(0);
     Hct secondarySourceColorHct =
-        extraSourceColorsHct.isEmpty() ? sourceColorHct : extraSourceColorsHct.get(0);
+        sourceColorHctList.size() > 1 ? sourceColorHctList.get(1) : sourceColorHct;
     if (sourceColorHct.toInt() == secondarySourceColorHct.toInt()) {
       return TonalPalette.fromHueAndChroma(
           sourceColorHct.getHue(), sourceColorHct.getChroma() * 0.75);

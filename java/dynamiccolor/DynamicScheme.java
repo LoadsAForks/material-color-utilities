@@ -17,17 +17,17 @@
 package dynamiccolor;
 
 import static java.lang.Math.min;
+import static java.util.stream.Collectors.joining;
 
 import dynamiccolor.ColorSpec.SpecVersion;
 import hct.Hct;
 import palettes.TonalPalette;
 import utils.MathUtils;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Provides important settings for creating colors dynamically, and 6 color palettes. Requires: 1. A
@@ -52,7 +52,7 @@ public class DynamicScheme {
   public final Hct sourceColorHct;
 
   /** The extra source colors of the theme as HCT colors. */
-  public final List<Hct> extraSourceColorsHct;
+  public final List<Hct> sourceColorHctList;
 
   /** The variant of the scheme. */
   public final Variant variant;
@@ -142,7 +142,7 @@ public class DynamicScheme {
       TonalPalette neutralVariantPalette,
       Optional<TonalPalette> errorPalette) {
     this(
-        sourceColorHct,
+        Collections.singletonList(sourceColorHct),
         variant,
         isDark,
         contrastLevel,
@@ -153,12 +153,11 @@ public class DynamicScheme {
         tertiaryPalette,
         neutralPalette,
         neutralVariantPalette,
-        errorPalette,
-        new ArrayList<>());
+        errorPalette);
   }
 
   public DynamicScheme(
-      Hct sourceColorHct,
+      List<Hct> sourceColorHctList,
       Variant variant,
       boolean isDark,
       double contrastLevel,
@@ -169,16 +168,18 @@ public class DynamicScheme {
       TonalPalette tertiaryPalette,
       TonalPalette neutralPalette,
       TonalPalette neutralVariantPalette,
-      Optional<TonalPalette> errorPalette,
-      List<Hct> extraSourceColorsHct) {
-    this.sourceColorArgb = sourceColorHct.toInt();
-    this.sourceColorHct = sourceColorHct;
+      Optional<TonalPalette> errorPalette) {
+    if (sourceColorHctList == null || sourceColorHctList.isEmpty()) {
+      throw new IllegalArgumentException("sourceColorHctList cannot be empty");
+    }
+    this.sourceColorHct = sourceColorHctList.get(0);
+    this.sourceColorArgb = this.sourceColorHct.toInt();
     this.variant = variant;
     this.isDark = isDark;
     this.contrastLevel = contrastLevel;
     this.platform = platform;
     this.specVersion = maybeFallbackSpecVersion(specVersion, variant);
-    this.extraSourceColorsHct = extraSourceColorsHct;
+    this.sourceColorHctList = sourceColorHctList;
 
     this.primaryPalette = primaryPalette;
     this.secondaryPalette = secondaryPalette;
@@ -194,7 +195,7 @@ public class DynamicScheme {
 
   public static DynamicScheme from(DynamicScheme other, boolean isDark, double contrastLevel) {
     return new DynamicScheme(
-        other.sourceColorHct,
+        other.sourceColorHctList,
         other.variant,
         isDark,
         contrastLevel,
@@ -205,8 +206,7 @@ public class DynamicScheme {
         other.tertiaryPalette,
         other.neutralPalette,
         other.neutralVariantPalette,
-        Optional.of(other.errorPalette),
-        other.extraSourceColorsHct);
+        Optional.of(other.errorPalette));
   }
 
   /**
@@ -317,11 +317,11 @@ public class DynamicScheme {
         platform.name().toLowerCase(Locale.ENGLISH),
         new DecimalFormat("0.0").format(contrastLevel),
         sourceColorHct,
-        extraSourceColorsHct.isEmpty()
+        sourceColorHctList.size() <= 1
             ? ""
-            : "extraSourceColorsHct="
-                + extraSourceColorsHct.stream().map(Hct::toString).collect(Collectors.joining(", "))
-                + ", ",
+            : "sourceColorHctList=["
+                + sourceColorHctList.stream().map(Hct::toString).collect(joining(", "))
+                + "], ",
         specVersion);
   }
 

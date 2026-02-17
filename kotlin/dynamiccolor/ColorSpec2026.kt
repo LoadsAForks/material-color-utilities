@@ -553,7 +553,7 @@ open class ColorSpec2026 : ColorSpec2025() {
         DynamicColor(
           name = "tertiary",
           palette = { it.tertiaryPalette },
-          tone = { it.extraSourceColorsHct.firstOrNull()?.tone ?: it.sourceColorHct.tone },
+          tone = { it.sourceColorHctList.getOrNull(1)?.tone ?: it.sourceColorHct.tone },
           isBackground = true,
           background = { highestSurface(it) },
           contrastCurve = { getContrastCurve(4.5) },
@@ -580,7 +580,7 @@ open class ColorSpec2026 : ColorSpec2025() {
           name = "tertiary_container",
           palette = { it.tertiaryPalette },
           tone = {
-            val secondarySourceColorHct = it.extraSourceColorsHct.firstOrNull() ?: it.sourceColorHct
+            val secondarySourceColorHct = it.sourceColorHctList.getOrNull(1) ?: it.sourceColorHct
             if (secondarySourceColorHct.tone > 55) {
               secondarySourceColorHct.tone.coerceIn(61.0, 90.0)
             } else {

@@ -27,37 +27,41 @@ import {TonalPalette} from '../palettes/tonal_palette.js';
 export class SchemeCmf extends DynamicScheme {
   constructor(
       sourceColorHct: Hct, isDark: boolean, contrastLevel: number,
+      specVersion?: SpecVersion, platform?: Platform);
+  constructor(
+      sourceColorHcts: Hct[], isDark: boolean, contrastLevel: number,
+      specVersion?: SpecVersion, platform?: Platform);
+  constructor(
+      sourceColorOrList: Hct|Hct[], isDark: boolean, contrastLevel: number,
       specVersion: SpecVersion = '2026',
-      platform: Platform = DynamicScheme.DEFAULT_PLATFORM,
-      extraSourceColorsHct: Hct[] = []) {
+      platform: Platform = DynamicScheme.DEFAULT_PLATFORM) {
     if (specVersion !== '2026') {
       throw new Error('SchemeCmf can only be used with spec version 2026.');
     }
+    const isArray = Array.isArray(sourceColorOrList);
+    const sourceColorHct = isArray ? sourceColorOrList[0] : sourceColorOrList;
+    const extraSourceColorsHct = isArray ? sourceColorOrList.slice(1) : [];
+    
     const secondarySourceColorHct = extraSourceColorsHct[0] ?? sourceColorHct;
 
     const primaryPalette = TonalPalette.fromHueAndChroma(
         sourceColorHct.hue, sourceColorHct.chroma);
     const secondaryPalette = TonalPalette.fromHueAndChroma(
         sourceColorHct.hue, sourceColorHct.chroma * 0.5);
-    const errorPalette = TonalPalette.fromHueAndChroma(
-        23.0, Math.max(sourceColorHct.chroma, 50.0));
+    const tertiaryPalette =
+        sourceColorHct.toInt() === secondarySourceColorHct.toInt() ?
+        TonalPalette.fromHueAndChroma(
+            sourceColorHct.hue, sourceColorHct.chroma * 0.75) :
+        TonalPalette.fromHueAndChroma(
+            secondarySourceColorHct.hue, secondarySourceColorHct.chroma);
     const neutralPalette = TonalPalette.fromHueAndChroma(
         sourceColorHct.hue, sourceColorHct.chroma * 0.2);
     const neutralVariantPalette = TonalPalette.fromHueAndChroma(
         sourceColorHct.hue, sourceColorHct.chroma * 0.2);
-
-    let tertiaryPalette: TonalPalette;
-
-    if (sourceColorHct.toInt() === secondarySourceColorHct.toInt()) {
-      tertiaryPalette = TonalPalette.fromHueAndChroma(
-          sourceColorHct.hue, sourceColorHct.chroma * 0.75);
-    } else {
-      tertiaryPalette = TonalPalette.fromHueAndChroma(
-          secondarySourceColorHct.hue, secondarySourceColorHct.chroma);
-    }
-
+    const errorPalette = TonalPalette.fromHueAndChroma(
+        23.0, Math.max(sourceColorHct.chroma, 50.0));
     super({
-      sourceColorHct,
+      sourceColorHcts: isArray ? sourceColorOrList : [sourceColorOrList],
       variant: Variant.CMF,
       contrastLevel,
       isDark,
@@ -69,7 +73,6 @@ export class SchemeCmf extends DynamicScheme {
       neutralPalette,
       neutralVariantPalette,
       errorPalette,
-      extraSourceColorsHct,
     });
   }
 }
