@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 0.13.1 - 2026-08-10
+
 ### Changed
 
 - Use `MathUtils.sanitizeDegreesDouble` for hue value calculation in `Cam16`.
+
+
+### Fixed
+
+- Fix documentation link for deprecated `Scheme` class.
 
 ## 0.13.0 - 2025-05-20
 
